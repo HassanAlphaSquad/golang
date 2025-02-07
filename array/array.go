@@ -12,12 +12,6 @@ func reverse(array [5]int) [5]int {
 
 	return reversed
 }
-func print_array(array [5]int) {
-	for i := 0; i < len(array); i++ {
-		fmt.Printf("%d->", array[i])
-	}
-	print("\n")
-}
 
 func main() {
 	var a [5]int
@@ -29,11 +23,11 @@ func main() {
 	for i := 0; i < len(inputs); i++ {
 		fmt.Printf("Enter value%d: ", i+1)
 		fmt.Scan(&inputs[i])
-		// fmt.Print("\n")
 	}
 
-	// fmt.Println("User input:", inputs)
-	print_array(inputs)
-	reversed := reverse(inputs)
-	fmt.Print(reversed)
+	fmt.Println("Original Array:", inputs)
+	reversed_array := reverse(inputs)
+	fmt.Print("Reversed Array: ")
+	fmt.Print(reversed_array)
+	fmt.Printf("\n")
 }

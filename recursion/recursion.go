@@ -14,5 +14,7 @@ func Factorial(x float64) (y float64) {
 func main() {
 	fmt.Print("Factorial:")
 	fmt.Print(Factorial(10))
+	fac20 := Factorial(20)
+	fmt.Print(fac20)
 	fmt.Print("\n")
 }
