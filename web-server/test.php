@@ -76,25 +76,6 @@ $myCar = new Car("Toyota", "Red");
 echo "<h3>OOP: Classes & Objects</h3>";
 echo "<p>" . $myCar->getDetails() . "</p>";
 
-// -------- Superglobals --------
-echo "<h3>Superglobals</h3>";
-echo "<p>Server Name: " . $_SERVER['SERVER_NAME'] . "</p>";
-
-// -------- Sessions --------
-session_start();
-$_SESSION["username"] = "JohnDoe";
-echo "<h3>Sessions</h3>";
-echo "<p>Session Username: " . $_SESSION["username"] . "</p>";
-
-// -------- Cookies --------
-setcookie("user", "JohnDoe", time() + 3600);
-echo "<h3>Cookies</h3>";
-if (isset($_COOKIE["user"])) {
-    echo "<p>Cookie Value: " . $_COOKIE["user"] . "</p>";
-} else {
-    echo "<p>No cookie found</p>";
-}
-
 // -------- Error Handling --------
 echo "<h3>Error Handling</h3>";
 function divide($a, $b)

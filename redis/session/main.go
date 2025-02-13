@@ -13,60 +13,53 @@ import (
 )
 
 var (
-	ctx    = context.Background()
-	client = redis.NewClient(&redis.Options{
-		Addr: "localhost:6379", // Redis server address
-	})
-	sessionDuration = 20 * time.Second // Session expires in 20 seconds
+	ctx              = context.Background()
+	client           = redis.NewClient(&redis.Options{Addr: "localhost:6379"})
+	session_duration = 20 * time.Second
 )
 
 func main() {
 	defer client.Close()
-
-	fmt.Println("🚀 Welcome to Console-Based Session Management")
+	fmt.Print("\n🚀 Welcome to Console-Based Session Management\n")
 
 	sessionID, err := client.Get(ctx, "session_id").Result()
 	if err == redis.Nil {
-		// No session found, ask for username
-		username := getUsername()
-		sessionID = uuid.NewString()
-
-		// Store session in Redis
-		err := client.Set(ctx, "session_id", sessionID, sessionDuration).Err()
-		if err != nil {
-			log.Fatal("Error storing session ID:", err)
-		}
-
-		err = client.Set(ctx, "session:"+sessionID, username, sessionDuration).Err()
-		if err != nil {
-			log.Fatal("Error storing username:", err)
-		}
-
-		fmt.Println("✅ Session created successfully!")
+		new_session()
 	} else {
-		fmt.Println("✅ Existing session found. Retrieving user info...")
-		username, err := client.Get(ctx, "session:"+sessionID).Result()
-		if err == redis.Nil {
-			fmt.Println("❌ Session expired. Please restart.")
-			return
-		} else if err != nil {
-			log.Fatal("Error retrieving session:", err)
-		}
-		fmt.Printf("🔑 Welcome back, %s!\n", username)
+		resume_session(sessionID)
 	}
+	menu()
+}
 
-	// Show options
+func new_session() {
+	username := input("\nEnter your username: ")
+	sessionID := uuid.NewString()
+	if err := client.Set(ctx, "session_id", sessionID, session_duration).Err(); err != nil {
+		log.Fatal("Error storing session ID:", err)
+	}
+	if err := client.Set(ctx, "session:"+sessionID, username, session_duration).Err(); err != nil {
+		log.Fatal("Error storing username:", err)
+	}
+	fmt.Println("\n✅ Session created successfully!")
+}
+
+func resume_session(sessionID string) {
+	username, err := client.Get(ctx, "session:"+sessionID).Result()
+	if err == redis.Nil {
+		fmt.Println("\n❌ Session expired. Please restart.")
+		os.Exit(0)
+	} else if err != nil {
+		log.Fatal("\nError retrieving session:", err)
+	}
+	fmt.Printf("\n🔑 Welcome back, %s!\n", username)
+}
+
+func menu() {
 	for {
-		fmt.Println("\nChoose an option:")
-		fmt.Println("1. Show session info")
-		fmt.Println("2. Logout")
-		fmt.Println("3. Exit")
-
-		choice := getInput("Enter choice: ")
-
-		switch choice {
+		fmt.Println("\n1. Show session info\n2. Logout\n3. Exit")
+		switch input("\nEnter choice: ") {
 		case "1":
-			showSessionInfo()
+			session_info()
 		case "2":
 			logout()
 			return
@@ -79,41 +72,52 @@ func main() {
 	}
 }
 
-// Function to get username input
-func getUsername() string {
-	username := getInput("Enter your username: ")
-	return username
-}
-
-// Function to retrieve and show session info
-func showSessionInfo() {
-	sessionID, _ := client.Get(ctx, "session_id").Result()
-	username, err := client.Get(ctx, "session:"+sessionID).Result()
+func session_info() {
+	sessionID, err := client.Get(ctx, "session_id").Result()
 	if err == redis.Nil {
 		fmt.Println("❌ No active session found.")
+		return
+	} else if err != nil {
+		fmt.Println("❌ Error retrieving session ID:", err)
+		return
+	}
+
+	username, err := client.Get(ctx, "session:"+sessionID).Result()
+	if err == redis.Nil {
+		fmt.Println("❌ Session expired or invalid.")
 	} else if err != nil {
 		fmt.Println("❌ Error retrieving session:", err)
 	} else {
-		fmt.Printf("🔑 Logged in as: %s (Session ID: %s)\n", username, sessionID)
+		fmt.Printf("\n🔑 Logged in as: %s (Session ID: %s)\n", username, sessionID)
 	}
 }
 
-// Function to handle logout
 func logout() {
 	sessionID, _ := client.Get(ctx, "session_id").Result()
+	client.Del(ctx, "session_id", "session:"+sessionID)
+	fmt.Println("\n✅ You have been logged out.")
 
-	// Delete session from Redis
-	client.Del(ctx, "session_id")
-	client.Del(ctx, "session:"+sessionID)
+	for {
+		fmt.Println("\n1. Start program again? ")
+		fmt.Println("2. Exit program?")
+		choice := input("\nEnter choice: ")
 
-	fmt.Println("✅ You have been logged out.")
-	main()
+		switch choice {
+		case "1":
+			fmt.Print("\n==============================================\n")
+			main()
+		case "2":
+			fmt.Println("\n👋 Exiting. Goodbye!")
+			os.Exit(0)
+		default:
+			fmt.Println("❌ Invalid choice. Try again.")
+		}
+	}
 }
 
-// Function to get input from the user
-func getInput(prompt string) string {
+func input(prompt string) string {
 	fmt.Print(prompt)
 	reader := bufio.NewReader(os.Stdin)
 	input, _ := reader.ReadString('\n')
-	return input[:len(input)-1] // Remove newline character
+	return input[:len(input)-1]
 }
