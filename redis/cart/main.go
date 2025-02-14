@@ -125,7 +125,7 @@ func clear_cart(userID string) {
 		fmt.Println("\n⛔ Error clearing cart:", err)
 	} else {
 		fmt.Println("\n✅ Cart cleared!")
-		seperator(10)
+		seperator(11)
 	}
 }
 
